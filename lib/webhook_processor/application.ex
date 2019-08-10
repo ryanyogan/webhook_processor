@@ -8,13 +8,15 @@ defmodule WebhookProcessor.Application do
   def start(_type, _args) do
     children = [
       Plug.Cowboy.child_spec(
-        schema: :http,
+        scheme: :http,
         plug: WebhookProcessor.Endpoint,
-        options: [port: Application.get_env(:webhook_processor, :port)]
+        options: [port: cowboy_port()]
       )
     ]
 
     opts = [strategy: :one_for_one, name: WebhookProcessor.Supervisor]
     Supervisor.start_link(children, opts)
   end
+
+  defp cowboy_port(), do: Application.get_env(:webhook_processor, :port)
 end
