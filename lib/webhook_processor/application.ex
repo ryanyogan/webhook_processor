@@ -10,7 +10,7 @@ defmodule WebhookProcessor.Application do
       Plug.Cowboy.child_spec(
         schema: :http,
         plug: WebhookProcessor.Endpoint,
-        options: [port: 4001]
+        options: [port: Application.get_env(:webhook_processor, :port)]
       )
     ]
 
