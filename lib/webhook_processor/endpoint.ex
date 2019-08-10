@@ -4,12 +4,18 @@ defmodule WebhookProcessor.Endpoint do
   JASON, matching routes, and dispatching responses.
   """
 
+  # alias WebhookProcessor.VerifyRequest
+
   use Plug.Router
+  use Plug.ErrorHandler
 
   # Plug pipeline: log -> match -> decode JSON -> dispatch
   plug(Plug.Logger)
-  plug(:match)
   plug(Plug.Parsers, parsers: [:json], json_decoder: Poison)
+
+  # plug(VerifyRequest, fields: ["content-type"], paths: ["/ping"])
+
+  plug(:match)
   plug(:dispatch)
 
   get "/ping" do
@@ -31,7 +37,12 @@ defmodule WebhookProcessor.Endpoint do
     send_resp(conn, status, body)
   end
 
+  match _ do
+    send_resp(conn, 404, "oops... Nothing here!")
+  end
+
   defp process_events(events) when is_list(events) do
+    IO.inspect(events)
     Poison.encode!(%{response: "Received Events!"})
   end
 
@@ -43,7 +54,10 @@ defmodule WebhookProcessor.Endpoint do
     Poison.encode!(%{error: "Expected Payload: { 'events': [...]"})
   end
 
-  match _ do
-    send_resp(conn, 404, "oops... Nothing here!")
+  defp handle_errors(conn, %{kind: kind, reason: reason, stack: stack}) do
+    IO.inspect(kind, label: :kind)
+    IO.inspect(reason, label: :reason)
+    IO.inspect(stack, label: :stack)
+    send_resp(conn, conn.status, "Something went wrong")
   end
 end
